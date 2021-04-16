@@ -1,7 +1,10 @@
-const dockerIP = "localhost";
+const dockerIP = "127.0.0.1";
 
 function signIn(){
-    let data = $("form").serialize()
+    let data = {
+        username: document.getElementById('login').value,
+        password: document.getElementById('exampleInputPassword1').value,
+    }
     
     let req = $.ajax({
         url: 'http://'+dockerIP+':5000/users/connect',
@@ -28,7 +31,10 @@ function signIn(){
 }
 
 function signUp(){
-    let data = $("form").serialize()
+    let data = {
+        username: document.getElementById('login').value,
+        password: document.getElementById('exampleInputPassword1').value,
+    }
     
     let req = $.ajax({
         url: 'http://'+dockerIP+':5000/users/register',
