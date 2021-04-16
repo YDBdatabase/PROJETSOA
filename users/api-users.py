@@ -113,7 +113,9 @@ def register_user():
             username = json.username
             password = json.password
             if collection_client.find_one({"username":username}) is None:
-                print()
+                salt = bcrypt.gensalt()
+                password_hash = bcrypt.hashpw(password, salt)
+                collection_client.insert_one({"username":username,"password":password_hash})
             else:
                 return Response("The given username already exists...")
         else:
@@ -121,13 +123,25 @@ def register_user():
     else:
         return Response("No Json Received...")
 
-@app.route('/api/users/connect/', methods=['POST'])
+@app.route('/users/connect/', methods=['POST'])
 def connect_user():
     if request.is_json():
         json = request.json
-        return user_json_validation(json)[1]
+        if user_json_validation(json)[0]:
+            username = json.username
+            password = json.password
+            if collection_client.find_one({"username":username}) is not None:
+                stored_user = collection_client.find_one({"username":username})
+                if bcrypt.checkpw(password, stored_user["password"]):
+                    print()
+                else:
+                    return Response("The given password is incorrect...")
+            else:
+                return Response("The given username doesn't exists...")
+        else:
+            return Response("The Received Json is not valid...")
     else:
-        return Response("No Json Received...", status=406)
+        return Response("No Json Received...")
 
 
 if ready: app.run(debug=True)
