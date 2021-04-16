@@ -1,3 +1,5 @@
+const dockerIP = "localhost";
+
 function signIn(){
     let data = $("form").serialize()
     
