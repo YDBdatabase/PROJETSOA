@@ -1,0 +1,11 @@
+{
+    "$schema": "http://json-schema.org/schema#",
+    "title": "JSON SCHEMA de demonstration",
+    "description": "Schema de validation pour ajout utilisateur",
+    "type": "object",
+    "oneOf": [{"required": ["username", "password"]}],
+    "properties":{"username": {"type": "string"},
+                  "password": {"type": "string"}},
+    "minProperties": 2,
+    "maxProperties": 2
+}
