@@ -1,17 +1,16 @@
+import zmq
 import json
 import bson
+import time
 import bcrypt
 import pymongo
 import calendar
-import time
+import threading
 from flask_cors import CORS, cross_origin
 from flasgger import Swagger
 from flask import Flask, Response, jsonify, request
 from jsonschema import validate
 from bson import json_util
-
-import zmq
-import threading
 from Crypto.PublicKey import RSA
 from Crypto.Random import get_random_bytes
 from Crypto.Cipher import AES, PKCS1_OAEP
@@ -40,7 +39,7 @@ def decryptJWTToken(jwtchiffre):
 
     return encoded_chiffre_jwt
 
-def print_incoming_messages():
+def get_incoming_token():
     recv_socket = context.socket(zmq.PULL)
     recv_socket.connect('tcp://127.0.0.1:5578')
     while True:
@@ -59,8 +58,7 @@ def print_incoming_messages():
             for j in range(len(msgsplit[i])):
                 msgsplit[i][j]=msgsplit[i][j].encode('ISO-8859-1')
         encoded_chiffre_jwt=decryptJWTToken(msgsplit)
-        print("\n",encoded_chiffre_jwt)
-        return encoded_chiffre_jwt
+        return str(encoded_chiffre_jwt)
 
 app = Flask(__name__)
 swagger = Swagger(app)
@@ -98,19 +96,18 @@ if mongo_client:
         print("the database was created !")
         if collection_client.count_documents({"test": "test"}) >= 1:
             collection_client.delete_many({"test": "test"})
-        
         context = zmq.Context()
         send_socket = context.socket(zmq.PUSH)
-        send_socket.connect('tcp://127.0.0.1:5579')
-        
-
-        ready = True
+        if send_socket is not None:
+            send_socket.connect('tcp://127.0.0.1:5579')
+            print("the connexion to the token dealer was established !")
+            ready = True
+        else:
+            print("the connection to the token dealer could not be established...")
     else:
         print("the database could not be created...")
-        ready = False
 else:
     print("the connection to mongodb could not be established...")
-    ready = False
 
 @app.route('/users/get/<username>', methods=['GET'])
 @cross_origin(supports_credentials=True)
@@ -247,12 +244,12 @@ def connect_user():
                 stored_user = collection_client.find_one({"username":username})
                 if bcrypt.checkpw(password.encode('utf8'), bytes.fromhex(stored_user["password"])):
                     datetimestamp=calendar.timegm(time.gmtime())
-                    recv_thread = threading.Thread(target=print_incoming_messages)
+                    recv_thread = threading.Thread(target=get_incoming_token)
                     recv_thread.start()            
-                    message='{"Header":{"alg":"HS256","typ":"JWT"},"Payload":{"iat":"'+datetimestamp+'","Username":"'+username+'"}}'
-                    print(message)
+                    message='{"Header":{"alg":"HS256","typ":"JWT"},"Payload":{"iat":"'+str(datetimestamp)+'","Username":"'+username+'"}}'
                     send_socket.send_string(message)
-                    return Response("The given user is connected !", status=200)
+                    token = get_incoming_token()
+                    return Response(token, status=200)
                 else:
                     return Response("The given password is incorrect...", status=400)
             else:
