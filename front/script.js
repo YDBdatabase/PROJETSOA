@@ -1,4 +1,5 @@
-const dockerIP = "127.0.0.1";
+const dockerIP = "localhost";
+const dockerPort = "8000";
 
 function signIn(){
     let data = {
@@ -7,7 +8,7 @@ function signIn(){
     }
     
     let req = $.ajax({
-        url: 'http://'+dockerIP+':5000/users/connect',
+        url: 'http://'+dockerIP+':'+dockerPort+'/users/connect',
         type: 'POST',
         contentType: "application/json",
         data: JSON.stringify(data),
@@ -37,7 +38,7 @@ function signUp(){
     }
     
     let req = $.ajax({
-        url: 'http://'+dockerIP+':5000/users/register',
+        url: 'http://'+dockerIP+':'+dockerPort+'/users/register',
         type: 'POST',
         contentType: "application/json",
         data: JSON.stringify(data),

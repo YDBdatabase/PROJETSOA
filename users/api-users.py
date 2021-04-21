@@ -1,13 +1,16 @@
 import json
+import bson
 import bcrypt
 import pymongo
+from flask_cors import CORS, cross_origin
 from flasgger import Swagger
-from flask import Flask, jsonify
-from bson import ObjectId
+from flask import Flask, Response, jsonify, request
 from jsonschema import validate
+from bson import json_util
 
 app = Flask(__name__)
 swagger = Swagger(app)
+CORS(app, support_credentials=True)
 
 def mongo_connection(mongo_url):
     return pymongo.MongoClient(mongo_url)
@@ -27,12 +30,6 @@ def user_json_validation(dict_to_test):
         return [False, valid_err]
     else:
         return [True, "JSON validé"]
-
-class JSONEncoder(json.JSONEncoder):
-    def default(self, o):
-        if isinstance(o, ObjectId):
-            return str(o)
-        return json.JSONEncoder.default(self, o)
 
 mongo_url = "mongodb://localhost:27017/"
 mongo_client = mongo_connection(mongo_url)
@@ -55,93 +52,149 @@ else:
     print("the connection to mongodb could not be established...")
     ready = False
 
-@app.route('/colors/<palette>/')
-def colors(palette):
-    """Example endpoint returning a list of colors by palette
-    This is using docstrings for specifications.
+@app.route('/users/get/<username>', methods=['GET'])
+@cross_origin(supports_credentials=True)
+def get_user(username):
+    """ API function that returns an user with the given username
     ---
     parameters:
-      - name: palette
+      - name: username
         in: path
-        type: string
-        enum: ['all', 'rgb', 'cmyk']
         required: true
-        default: all
+        type: string
     definitions:
-      Palette:
+      User:
         type: object
         properties:
-          palette_name:
-            type: array
-            items:
-              $ref: '#/definitions/Color'
-      Color:
-        type: string
+          _id:
+            type: string
+          username:
+            type: string
+          password:
+            type: string
     responses:
       200:
-        description: A list of colors (may be filtered by palette)
+        description: An user with the given username
         schema:
-          $ref: '#/definitions/Palette'
-        examples:
-          rgb: ['red', 'green', 'blue']
+          $ref: '#/definitions/User'
     """
-    all_colors = {
-        'cmyk': ['cian', 'magenta', 'yellow', 'black'],
-        'rgb': ['red', 'green', 'blue']
-    }
-    if palette == 'all':
-        result = all_colors
-    else:
-        result = {palette: all_colors.get(palette)}
+    user = collection_client.find_one({"username":username})
+    json_user = bson.json_util.dumps(user)
+    return Response(json_user, status=200)
 
-    return jsonify(result)
-
-@app.route('/users/list/', methods=['GET'])
+@app.route('/users/list', methods=['GET'])
+@cross_origin(supports_credentials=True)
 def list_users():
-    return JSONEncoder().encode(list(collection_client.find()))
+    """ API function that returns a list of all users
+    ---
+    definitions:
+      User:
+        type: object
+        properties:
+          _id:
+            type: string
+          username:
+            type: string
+          password:
+            type: string
+    responses:
+      200:
+        description: A list of all users
+        schema:
+          type: array
+          items:
+              $ref: '#/definitions/User'
+    """
+    users = list(collection_client.find())
+    json_users = bson.json_util.dumps(users)
+    return Response(json_users, status=200)
 
-@app.route('/users/get/<username>/<password>', methods=['GET'])
-def get_user(username, password):
-    print(str(collection_client.find_one({"username":username,"password":password})))
-    return JSONEncoder().encode(collection_client.find_one({"username":username,"password":password}))
-
-@app.route('/api/users/register/', methods=['POST'])
+@app.route('/users/register', methods=['POST'])
+@cross_origin(supports_credentials=True)
 def register_user():
-    if request.is_json():
-        json = request.json
-        if user_json_validation(json)[0]:
-            username = json.username
-            password = json.password
+    """ API function that registers an user
+    ---
+    parameters:
+      - name: json_user
+        in: formData
+        required: true
+        description: JSON parameters.
+    definitions:
+      User:
+        type: object
+        properties:
+          username:
+            type: string
+          password:
+            type: string
+    consumes:
+    - application/json
+    responses:
+      200:
+        description: A success message
+      400:
+        description: An error message
+    """
+    if request.is_json and request.json is not None:
+        json_user = request.json
+        if user_json_validation(json_user)[0]:
+            username = json_user["username"]
+            password = json_user["password"]
             if collection_client.find_one({"username":username}) is None:
                 salt = bcrypt.gensalt()
-                password_hash = bcrypt.hashpw(password, salt)
+                password_hash = bcrypt.hashpw(password.encode('utf8'), salt).hex()
                 collection_client.insert_one({"username":username,"password":password_hash})
+                return Response("The given user is now registered !", status=200)
             else:
-                return Response("The given username already exists...")
+                return Response("The given username already exists...", status=400)
         else:
-            return Response("The Received Json is not valid...")
+            return Response("The Received Json is not valid...", status=400)
     else:
-        return Response("No Json Received...")
+        return Response("No Json Received...", status=400)
 
-@app.route('/users/connect/', methods=['POST'])
+@app.route('/users/connect', methods=['POST'])
+@cross_origin(supports_credentials=True)
 def connect_user():
-    if request.is_json():
-        json = request.json
-        if user_json_validation(json)[0]:
-            username = json.username
-            password = json.password
+    """ API function that connects an user
+    ---
+    parameters:
+      - name: json_user
+        in: formData
+        required: true
+        description: JSON parameters.
+    definitions:
+      User:
+        type: object
+        properties:
+          username:
+            type: string
+          password:
+            type: string
+    consumes:
+    - application/json
+    responses:
+      200:
+        description: A success message
+      400:
+        description: An error message
+    """
+    if request.is_json and request.json is not None:
+        json_user = request.json
+        if user_json_validation(json_user)[0]:
+            username = json_user["username"]
+            password = json_user["password"]
             if collection_client.find_one({"username":username}) is not None:
                 stored_user = collection_client.find_one({"username":username})
-                if bcrypt.checkpw(password, stored_user["password"]):
-                    print()
+                if bcrypt.checkpw(password.encode('utf8'), bytes.fromhex(stored_user["password"])):
+                    return Response("The given user is connected !", status=200)
                 else:
-                    return Response("The given password is incorrect...")
+                    return Response("The given password is incorrect...", status=400)
             else:
-                return Response("The given username doesn't exists...")
+                return Response("The given username doesn't exists...", status=400)
         else:
-            return Response("The Received Json is not valid...")
+            return Response("The Received Json is not valid...", status=400)
     else:
-        return Response("No Json Received...")
+        return Response("No Json Received...", status=400)
 
 
-if ready: app.run(debug=True)
+if ready: app.run(host='0.0.0.0', port=8000, debug=True)
