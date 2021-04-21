@@ -50,10 +50,10 @@ def sendJWTToken(secret):
 
 context = zmq.Context()
 send_socket = context.socket(zmq.PUSH)
-send_socket.bind('tcp://*:5576')
+send_socket.bind('tcp://*:5578')
 
 recv_socket = context.socket(zmq.PULL)
-recv_socket.bind('tcp://*:5577')
+recv_socket.bind('tcp://*:5579')
 while True:
     msg = recv_socket.recv_string()
     print(f'Message from client: {msg}')
