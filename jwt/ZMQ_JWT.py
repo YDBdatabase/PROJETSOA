@@ -2,7 +2,9 @@ import jwt
 import time
 import zmq
 import json
+import os
 from io import StringIO
+import sys
 import threading
 from Crypto.PublicKey import RSA
 from Crypto.Random import get_random_bytes
@@ -53,17 +55,17 @@ def decodeJWTTOKEN(Token):
     print("jwt= ",jwtrest)
     return jwtrest
 
-
+print("Starting ...")
 context = zmq.Context()
 send_socket = context.socket(zmq.PUSH)
-send_socket.bind('tcp://*:5580')
+send_socket.bind('tcp://0.0.0.0:3000')
 
 recv_socket = context.socket(zmq.PULL)
-recv_socket.bind('tcp://*:5581')
+recv_socket.bind('tcp://0.0.0.0:3001')
 
 send_socketAPR = context.socket(zmq.PUSH)
-send_socketAPR.bind('tcp://*:5582')
-
+send_socketAPR.bind('tcp://0.0.0.0:3002')
+print("Connexion done")
 while True:
     msg = recv_socket.recv_string()
     if(msg[0]=="{"):
