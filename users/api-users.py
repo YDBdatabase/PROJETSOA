@@ -15,55 +15,6 @@ from Crypto.PublicKey import RSA
 from Crypto.Random import get_random_bytes
 from Crypto.Cipher import AES, PKCS1_OAEP
 
-def decrypt(data,key,tag,nonce,enc_session_key):
-    # Decrypt the session key with the private RSA key
-    cipher_rsa = PKCS1_OAEP.new(key)
-    session_key = cipher_rsa.decrypt(enc_session_key)
-
-    # Decrypt the data with the AES session key
-    cipher_aes_dec = AES.new(session_key, AES.MODE_EAX, nonce)
-    data = cipher_aes_dec.decrypt_and_verify(data, tag)
-    return data.decode("utf-8")
-
-def decryptJWTToken(jwtchiffre):
-    f = open('mykey.pem','r')
-    key = RSA.import_key(f.read())
-    encoded_chiffre_jwt=""
-    for i in range(len(jwtchiffre)):
-        #print(jwtchiffre[i][0],key,jwtchiffre[i][1],jwtchiffre[i][2],jwtchiffre[i][3])
-        jwtdechiffre=decrypt(jwtchiffre[i][0],key,jwtchiffre[i][1],jwtchiffre[i][2],jwtchiffre[i][3])
-        if(i!=len(jwtchiffre)-1):
-            encoded_chiffre_jwt+=str(jwtdechiffre)+"."
-        else:
-            encoded_chiffre_jwt+=str(jwtdechiffre)
-
-    return encoded_chiffre_jwt
-
-def get_incoming_token():
-    recv_socket = context.socket(zmq.PULL)
-    recv_socket.connect('tcp://127.0.0.1:5578')
-    while True:
-        msg = recv_socket.recv_string()
-        #print(msg)
-        msgsplited=msg.split("***")
-        newmsg=[]
-        msgtab=[]
-        msgsplit=[]
-        for i in range(len(msgsplited)-1):
-            msgsplit.append(msgsplited[i].split("^^^"))
-        for x in range(len(msgsplit)):
-            del msgsplit[x][-1]
-        
-        for i in range(len(msgsplit)):
-            for j in range(len(msgsplit[i])):
-                msgsplit[i][j]=msgsplit[i][j].encode('ISO-8859-1')
-        encoded_chiffre_jwt=decryptJWTToken(msgsplit)
-        return str(encoded_chiffre_jwt)
-
-app = Flask(__name__)
-swagger = Swagger(app)
-CORS(app, support_credentials=True)
-
 def mongo_connection(mongo_url):
     return pymongo.MongoClient(mongo_url)
 
@@ -83,31 +34,52 @@ def user_json_validation(dict_to_test):
     else:
         return [True, "JSON validé"]
 
-mongo_url = "mongodb://localhost:27017/"
-mongo_client = mongo_connection(mongo_url)
-if mongo_client:
-    print("the connection to mongodb was established !")
-    database_name = "projectsoa_database"
-    database_client = mongo_database_creation(mongo_client, database_name)
-    collection_name = "users"
-    collection_client = mongo_collection_creation(database_client, collection_name)
-    test = collection_client.insert_one({"test": "test"})
-    if database_name in mongo_client.list_database_names():
-        print("the database was created !")
-        if collection_client.count_documents({"test": "test"}) >= 1:
-            collection_client.delete_many({"test": "test"})
-        context = zmq.Context()
-        send_socket = context.socket(zmq.PUSH)
-        if send_socket is not None:
-            send_socket.connect('tcp://127.0.0.1:5579')
-            print("the connexion to the token dealer was established !")
-            ready = True
+def decrypt(data,key,tag,nonce,enc_session_key):
+    # Decrypt the session key with the private RSA key
+    cipher_rsa = PKCS1_OAEP.new(key)
+    session_key = cipher_rsa.decrypt(enc_session_key)
+
+    # Decrypt the data with the AES session key
+    cipher_aes_dec = AES.new(session_key, AES.MODE_EAX, nonce)
+    data = cipher_aes_dec.decrypt_and_verify(data, tag)
+    return data.decode("utf-8")
+
+def decryptJWTToken(jwtchiffre):
+    f = open('mykey.pem','r')
+    key = RSA.import_key(f.read())
+    encoded_chiffre_jwt=""
+    for i in range(len(jwtchiffre)):
+        jwtdechiffre=decrypt(jwtchiffre[i][0],key,jwtchiffre[i][1],jwtchiffre[i][2],jwtchiffre[i][3])
+        if(i!=len(jwtchiffre)-1):
+            encoded_chiffre_jwt+=str(jwtdechiffre)+"."
         else:
-            print("the connection to the token dealer could not be established...")
-    else:
-        print("the database could not be created...")
-else:
-    print("the connection to mongodb could not be established...")
+            encoded_chiffre_jwt+=str(jwtdechiffre)
+
+    return encoded_chiffre_jwt
+
+def get_incoming_token():
+    recv_socket = context.socket(zmq.PULL)
+    recv_socket.connect('tcp://127.0.0.1:5578')
+    while True:
+        msg = recv_socket.recv_string()
+        msgsplited=msg.split("***")
+        newmsg=[]
+        msgtab=[]
+        msgsplit=[]
+        for i in range(len(msgsplited)-1):
+            msgsplit.append(msgsplited[i].split("^^^"))
+        for x in range(len(msgsplit)):
+            del msgsplit[x][-1]
+        
+        for i in range(len(msgsplit)):
+            for j in range(len(msgsplit[i])):
+                msgsplit[i][j]=msgsplit[i][j].encode('ISO-8859-1')
+        encoded_chiffre_jwt=decryptJWTToken(msgsplit)
+        return str(encoded_chiffre_jwt)
+
+app = Flask(__name__)
+swagger = Swagger(app)
+CORS(app, support_credentials=True)
 
 @app.route('/users/get/<username>', methods=['GET'])
 @cross_origin(supports_credentials=True)
@@ -259,5 +231,32 @@ def connect_user():
     else:
         return Response("No Json Received...", status=400)
 
-
-if ready: app.run(host='0.0.0.0', port=8000, debug=True)
+if __name__ == "__main__":
+    mongo_url = "mongodb://localhost:27017/"
+    mongo_client = mongo_connection(mongo_url)
+    try:
+        # The ismaster command is cheap and does not require auth.
+        mongo_client.admin.command('ismaster')
+    except pymongo.errors.ConnectionFailure:
+        print("the connection to mongodb could not be established !")
+    else:
+        print("the connection to mongodb was established !")
+        database_name = "projectsoa_database"
+        database_client = mongo_database_creation(mongo_client, database_name)
+        collection_name = "users"
+        collection_client = mongo_collection_creation(database_client, collection_name)
+        test = collection_client.insert_one({"test": "test"})
+        if database_name in mongo_client.list_database_names():
+            print("the database and its collection were created !")
+            if collection_client.count_documents({"test": "test"}) >= 1:
+                collection_client.delete_many({"test": "test"})
+            context = zmq.Context()
+            send_socket = context.socket(zmq.PUSH)
+            if send_socket is not None:
+                send_socket.connect('tcp://127.0.0.1:5579')
+                print("the connexion to the token dealer was established !")
+                app.run(host='0.0.0.0', port=8000, debug=True)
+            else:
+                print("the connection to the token dealer could not be established...")
+        else:
+            print("the database and its collection could not be created...")
