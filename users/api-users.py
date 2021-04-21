@@ -173,13 +173,13 @@ def register_user():
                 salt = bcrypt.gensalt()
                 password_hash = bcrypt.hashpw(password.encode('utf8'), salt).hex()
                 collection_client.insert_one({"username":username,"password":password_hash})
-                return Response("The given user is now registered !", status=200)
+                return Response(bson.json_util.dumps({"response":"The given user is now registered !"}), status=200)
             else:
-                return Response("The given username already exists...", status=400)
+                return Response(bson.json_util.dumps({"response":"The given username already exists..."}), status=400)
         else:
-            return Response("The Received Json is not valid...", status=400)
+            return Response(bson.json_util.dumps({"response":"The Received Json is not valid..."}), status=400)
     else:
-        return Response("No Json Received...", status=400)
+        return Response(bson.json_util.dumps({"response":"No Json Received..."}), status=400)
 
 @app.route('/users/connect', methods=['POST'])
 @cross_origin(supports_credentials=True)
@@ -223,13 +223,13 @@ def connect_user():
                     token = get_incoming_token()
                     return Response(token, status=200)
                 else:
-                    return Response("The given password is incorrect...", status=400)
+                    return Response(bson.json_util.dumps({"response":"The given password is incorrect..."}), status=400)
             else:
-                return Response("The given username doesn't exists...", status=400)
+                return Response(bson.json_util.dumps({"response":"The given username doesn\'t exists..."}), status=400)
         else:
-            return Response("The Received Json is not valid...", status=400)
+            return Response(bson.json_util.dumps({"response":"The Received Json is not valid..."}), status=400)
     else:
-        return Response("No Json Received...", status=400)
+        return Response(bson.json_util.dumps({"response":"No Json Received..."}), status=400)
 
 if __name__ == "__main__":
     mongo_url = "mongodb://localhost:27017/"

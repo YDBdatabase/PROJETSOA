@@ -64,10 +64,20 @@ app = Flask(__name__)
 swagger = Swagger(app)
 CORS(app, support_credentials=True)
 
-@app.route('/apr/get_resource/', methods=['GET'])
+@app.route('/apr/get_resource', methods=['GET'])
 @cross_origin(supports_credentials=True)
 def get_user(username):
     """ API function that returns an user with the given username
     ---
     """
     return Response("yes", status=200)
+
+if __name__ == "__main__":
+    context = zmq.Context()
+    send_socket = context.socket(zmq.PUSH)
+    if send_socket is not None:
+        send_socket.connect('tcp://127.0.0.1:5579')
+        print("the connexion to the token dealer was established !")
+        app.run(host='localhost', port=5000, debug=True)
+    else:
+        print("the connection to the token dealer could not be established...")
