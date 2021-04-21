@@ -31,11 +31,11 @@ def decryptJWTToken(jwtchiffre):
 
 context = zmq.Context()
 send_socket = context.socket(zmq.PUSH)
-send_socket.connect('tcp://127.0.0.1:5579')
+send_socket.connect('tcp://127.0.0.1:5581')
 
 def print_incoming_messages():
     recv_socket = context.socket(zmq.PULL)
-    recv_socket.connect('tcp://127.0.0.1:5578')
+    recv_socket.connect('tcp://127.0.0.1:5580')
     while True:
         msg = recv_socket.recv_string()
         #print(msg)
