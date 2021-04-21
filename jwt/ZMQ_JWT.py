@@ -7,6 +7,7 @@ import threading
 from Crypto.PublicKey import RSA
 from Crypto.Random import get_random_bytes
 from Crypto.Cipher import AES, PKCS1_OAEP
+
 """
 key = RSA.generate(2048)
 f = open('mykey.pem','wb')
@@ -45,32 +46,47 @@ def sendJWTToken(secret):
         #print(res,tag,nonce,enc_key)
         jwtchiffre.append([res.decode('ISO-8859-1') ,tag.decode('ISO-8859-1'),nonce.decode('ISO-8859-1'),enc_key.decode('ISO-8859-1')])
 
-    return(jwtchiffre) #SEND MESSAGE    
+    return(jwtchiffre) #SEND MESSAGE  
+
+def decodeJWTTOKEN(Token):
+    jwtrest=jwt.decode(Token, 'aogkrejgi2GA651g5&4dgth6781zlhafi12gri93p3uDNCe', algorithms=['HS256'])
+    print("jwt= ",jwtrest)
+    return jwtrest
 
 
 context = zmq.Context()
 send_socket = context.socket(zmq.PUSH)
-send_socket.bind('tcp://*:5578')
+send_socket.bind('tcp://*:5580')
 
 recv_socket = context.socket(zmq.PULL)
-recv_socket.bind('tcp://*:5579')
+recv_socket.bind('tcp://*:5581')
+
+send_socketAPR = context.socket(zmq.PUSH)
+send_socketAPR.bind('tcp://*:5582')
+
 while True:
     msg = recv_socket.recv_string()
-    print(f'Message from client: {msg}')
-    msgToken = sendJWTToken(json.loads(msg))#{'some': 'payload'}
-    messagesplit=""
-    for i in range(len(msgToken)):
-        msginter=""
-        for j in range(len(msgToken[i])):
-            msginter+=str(msgToken[i][j])+"^^^"
-        messagesplit+=str(msginter)+"***"
-    print("Sending...")
-    send_socket.send_string(str(messagesplit))
-
-    
-
-
-    #Decode JWT Token
-    """encoded_chiffre_jwt=decryptJWTToken(msgsplit)
-    jwtrest=jwt.decode(encoded_chiffre_jwt, 'aogkrejgi2GA651g5&4dgth6781zlhafi12gri93p3uDNCe', algorithms=['HS256'])
-    print("jwt= ",jwtrest)"""
+    if(msg[0]=="{"):
+        try:
+            print(f'Message from client: {msg}')
+            msgToken = sendJWTToken(json.loads(msg))#{'some': 'payload'}
+            messagesplit=""
+            for i in range(len(msgToken)):
+                msginter=""
+                for j in range(len(msgToken[i])):
+                    msginter+=str(msgToken[i][j])+"^^^"
+                messagesplit+=str(msginter)+"***"
+            print("Sending...")
+            send_socket.send_string(str(messagesplit))
+        except:
+            print("Error while creating JWT TOKEN")
+    elif("|" in msg):
+        try:
+            msgsplit=msg.split("|")
+            decodeJWT=decodeJWTTOKEN(msgsplit[1])
+            if(msgsplit[0]==decodeJWT["Payload"]["Username"]):
+                send_socketAPR.send_string("True")
+            else:
+                send_socketAPR.send_string("False")
+        except:
+            send_socketAPR.send_string("False")
