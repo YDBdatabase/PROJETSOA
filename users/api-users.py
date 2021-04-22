@@ -59,7 +59,7 @@ def decryptJWTToken(jwtchiffre):
 
 def get_incoming_token():
     recv_socket = context.socket(zmq.PULL)
-    recv_socket.connect('tcp://127.0.0.1:5578')
+    recv_socket.connect('tcp://'+jwt_receive_host+':'+jwt_receive_port)
     while True:
         msg = recv_socket.recv_string()
         msgsplited=msg.split("***")
@@ -75,6 +75,7 @@ def get_incoming_token():
             for j in range(len(msgsplit[i])):
                 msgsplit[i][j]=msgsplit[i][j].encode('ISO-8859-1')
         encoded_chiffre_jwt=decryptJWTToken(msgsplit)
+        print(encoded_chiffre_jwt)
         return str(encoded_chiffre_jwt)
 
 app = Flask(__name__)
@@ -221,7 +222,7 @@ def connect_user():
                     message='{"Header":{"alg":"HS256","typ":"JWT"},"Payload":{"iat":"'+str(datetimestamp)+'","Username":"'+username+'"}}'
                     send_socket.send_string(message)
                     token = get_incoming_token()
-                    return Response(token, status=200)
+                    return Response(bson.json_util.dumps({"response":"The given user is now connected !","token": token}), status=200)
                 else:
                     return Response(bson.json_util.dumps({"response":"The given password is incorrect..."}), status=400)
             else:
@@ -250,12 +251,15 @@ if __name__ == "__main__":
             print("the database and its collection were created !")
             if collection_client.count_documents({"test": "test"}) >= 1:
                 collection_client.delete_many({"test": "test"})
+            jwt_send_host = "127.0.0.1"
+            jwt_send_port = "5556"
+            jwt_receive_host = "127.0.0.1"
+            jwt_receive_port = "5555"
             context = zmq.Context()
             send_socket = context.socket(zmq.PUSH)
             if send_socket is not None:
-                send_socket.connect('tcp://127.0.0.1:5579')
-                print("the connexion to the token dealer was established !")
-                app.run(host='0.0.0.0', port=8000, debug=True)
+                send_socket.connect('tcp://'+jwt_send_host+':'+jwt_send_port)
+                app.run(host='localhost', port=8000, debug=True)
             else:
                 print("the connection to the token dealer could not be established...")
         else:
