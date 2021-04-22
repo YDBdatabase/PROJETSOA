@@ -8,5 +8,7 @@ RUN pip install pycryptodome
 
 RUN pip install ZMQ
 
+EXPOSE 5555
+
 CMD [ "python","-u","ZMQtestClient.py" ]
 

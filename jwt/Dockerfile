@@ -8,7 +8,9 @@ RUN pip install pycryptodome
 
 RUN pip install ZMQ
 
-EXPOSE 3001
+RUN apt-get update && \
+  apt-get install -y --no-install-recommends \
+  gcc
 
-CMD [ "python","-u","ZMQ_JWT.py" ]
+CMD [ "python","-u","ZMQ_JWT.py", ]
 
