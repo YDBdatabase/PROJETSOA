@@ -59,7 +59,9 @@ def print_incoming_messages():
 recv_thread = threading.Thread(target=print_incoming_messages)
 recv_thread.start()
 
-while True:
-    """msg = input('Message to send: ')
+"""while True:
+    msg = input('Message to send: ')
     send_socket.send_string(msg)"""
-    send_socket.send_string('{"Header":{"alg":"HS256","typ":"JWT"},"Payload":{"iat":"19898890808","Username":"bigest"}}')
+print("yes")
+send_socket.send_string('{"Header":{"alg":"HS256","typ":"JWT"},"Payload":{"iat":"19898890808","Username":"bigest"}}')
+print("done")

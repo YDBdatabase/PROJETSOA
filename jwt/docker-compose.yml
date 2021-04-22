@@ -1,12 +1,22 @@
 version: "2"
 
 services:
-  serverd:
+  zmq:
     build: .
     command: ["python", "-u", "./ZMQ_JWT.py"]
     environment:
       SERVER_LISTEN_URI: tcp://0.0.0.0:5556
-      SERVER_CONNECT_URI: tcp://serverd:5555
+      SERVER_CONNECT_URI: tcp://0.0.0.0:5555
+    networks:
+      mynet:
+        aliases:
+          - serverd
+  zmqtest:
+    build: .
+    command: ["python", "-u","./ZMQtestClient.py"]
+    environment:
+      SERVER_LISTEN_URI: tcp://0.0.0.0:5555
+      SERVER_CONNECT_URI: tcp://0.0.0.0:5556
     networks:
       mynet:
         aliases:
