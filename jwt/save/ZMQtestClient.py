@@ -31,11 +31,11 @@ def decryptJWTToken(jwtchiffre):
 
 context = zmq.Context()
 send_socket = context.socket(zmq.PUSH)
-send_socket.connect('tcp://0.0.0.0:5556')
+send_socket.connect('tcp://127.0.0.1:5556')
 
 def print_incoming_messages():
     recv_socket = context.socket(zmq.PULL)
-    recv_socket.connect('tcp://0.0.0.0:5555')
+    recv_socket.connect('tcp://127.0.0.1:5555')
     while True:
         msg = recv_socket.recv_string()
         #print(msg)
@@ -60,6 +60,5 @@ recv_thread = threading.Thread(target=print_incoming_messages)
 recv_thread.start()
 
 while True:
-    """msg = input('Message to send: ')
-    send_socket.send_string(msg)"""
-    send_socket.send_string('{"Header":{"alg":"HS256","typ":"JWT"},"Payload":{"iat":"19898890808","Username":"bigest"}}')
+    msg = input('Message to send: ')
+    send_socket.send_string(msg)

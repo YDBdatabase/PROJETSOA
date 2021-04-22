@@ -1,0 +1,17 @@
+version: "2"
+
+services:
+  serverd:
+    build: .
+    command: ["python", "-u", "./ZMQ_JWT.py"]
+    environment:
+      SERVER_LISTEN_URI: tcp://0.0.0.0:5556
+      SERVER_CONNECT_URI: tcp://serverd:5555
+    networks:
+      mynet:
+        aliases:
+          - serverd
+
+networks:
+  mynet:
+    external: True
