@@ -1,7 +1,9 @@
 const dockerIP = "localhost";
 const dockerPort = "8000";
 
-function signIn(){
+
+
+/*function signIn(){
     let data = {
         username: document.getElementById('login').value,
         password: document.getElementById('exampleInputPassword1').value,
@@ -29,9 +31,9 @@ function signIn(){
     })
     
     
-}
+}*/
 
-function signUp(){
+/*function signUp(){
     let data = {
         username: document.getElementById('login').value,
         password: document.getElementById('exampleInputPassword1').value,
@@ -47,7 +49,8 @@ function signUp(){
             alert('User Created');
         }],
         error: [function () {
-            alert('Error on user creation');
+            console.log(xhr.status);
+            alert("Error on user creation");
         }]
     });
 
@@ -56,7 +59,7 @@ function signUp(){
     }, function(xhr) {
         console.error('failed to fetch xhr', xhr)
     })
-}
+}*/
 
 function logOut(){
     localStorage.clear();

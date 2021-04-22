@@ -37,7 +37,7 @@
     </div>
 </nav>
 
-<form action="javascript:;" onsubmit="signIn()">
+<form id="form_0" name="form_0" method="post" action="">
     <div class="mb-3">
         <label class="form-label">Login</label>
         <input type="text" class="form-control" id="login">
@@ -49,5 +49,29 @@
     <button type="submit" class="btn btn-primary" >Log in</button>
 </form>
 
+<script>
+    $("#form_0").submit(function(e) {
+        e.preventDefault();
+        let data = {
+            username: document.getElementById('login').value,
+            password: document.getElementById('exampleInputPassword1').value,
+        }
+        $.ajax({
+            type: "POST",
+            url: 'http://localhost:8000/users/connect',
+            contentType: "application/json",
+            data: JSON.stringify(data),
+            dataType: "json",
+            success: function(result) {
+                    alert("You are logged in !")
+                    console.log(result.response);
+            },
+            error: function(xhr, status, error){
+                alert("User not logged, verify login/pwd");
+                console.log(xhr.responseText);
+            }
+        });
+    });
+</script>
 </body>
 </html>
