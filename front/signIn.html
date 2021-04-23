@@ -23,7 +23,7 @@
                 <li class="nav-item"><a class="nav-link disabled" href="getResources.html" tabindex="-1" aria-disabled="true" id="resources">Get resources</a></li>
             </ul>
             <script>
-                 if (localStorage.getItem('username')!=null) {
+                if (localStorage.getItem('username')!=null) {
                     var button = document.createElement("button");
                     button.innerHTML = "Log out";
                     button.onclick = logOut;
@@ -63,8 +63,12 @@
             data: JSON.stringify(data),
             dataType: "json",
             success: function(result) {
-                    alert("You are logged in !")
-                    console.log(result.response);
+                alert("You are logged in !");
+                console.log(result.response);
+                console.log(result.token);
+                localStorage.setItem("username", document.getElementById('login').value);
+                localStorage.setItem("token",result.token);
+                location.reload(); 
             },
             error: function(xhr, status, error){
                 alert("User not logged, verify login/pwd");
