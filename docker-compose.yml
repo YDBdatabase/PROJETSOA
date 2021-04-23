@@ -1,0 +1,11 @@
+version: '3'
+services:
+  jwt:
+    build: "./jwt"
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
+    environment:
+      - ZMQ_ADDRESS=tcp://0.0.0.0:5556
+      - ZMQ_ADDRESS_2=tcp://0.0.0.0:5555
+      - ZMQ_ADDRESS_3=tcp://0.0.0.0:5557
+  
