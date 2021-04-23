@@ -5,7 +5,7 @@ import time
 import bcrypt
 import pymongo
 import calendar
-import threading
+import concurrent.futures
 from flask_cors import CORS, cross_origin
 from flasgger import Swagger
 from flask import Flask, Response, jsonify, request
@@ -60,23 +60,21 @@ def decryptJWTToken(jwtchiffre):
 def get_incoming_token():
     recv_socket = context.socket(zmq.PULL)
     recv_socket.connect('tcp://'+jwt_receive_host+':'+jwt_receive_port)
-    while True:
-        msg = recv_socket.recv_string()
-        msgsplited=msg.split("***")
-        newmsg=[]
-        msgtab=[]
-        msgsplit=[]
-        for i in range(len(msgsplited)-1):
-            msgsplit.append(msgsplited[i].split("^^^"))
-        for x in range(len(msgsplit)):
-            del msgsplit[x][-1]
-        
-        for i in range(len(msgsplit)):
-            for j in range(len(msgsplit[i])):
-                msgsplit[i][j]=msgsplit[i][j].encode('ISO-8859-1')
-        encoded_chiffre_jwt=decryptJWTToken(msgsplit)
-        print(encoded_chiffre_jwt)
-        return str(encoded_chiffre_jwt)
+    msg = recv_socket.recv_string()
+    msgsplited=msg.split("***")
+    newmsg=[]
+    msgtab=[]
+    msgsplit=[]
+    for i in range(len(msgsplited)-1):
+        msgsplit.append(msgsplited[i].split("^^^"))
+    for x in range(len(msgsplit)):
+        del msgsplit[x][-1]
+    
+    for i in range(len(msgsplit)):
+        for j in range(len(msgsplit[i])):
+            msgsplit[i][j]=msgsplit[i][j].encode('ISO-8859-1')
+    encoded_chiffre_jwt=decryptJWTToken(msgsplit)
+    return str(encoded_chiffre_jwt)
 
 app = Flask(__name__)
 swagger = Swagger(app)
@@ -217,13 +215,13 @@ def connect_user():
                 stored_user = collection_client.find_one({"username":username})
                 if bcrypt.checkpw(password.encode('utf8'), bytes.fromhex(stored_user["password"])):
                     datetimestamp=calendar.timegm(time.gmtime())
-                    recv_thread = threading.Thread(target=get_incoming_token)
-                    recv_thread.start()            
                     message='{"Header":{"alg":"HS256","typ":"JWT"},"Payload":{"iat":"'+str(datetimestamp)+'","Username":"'+username+'"}}'
                     send_socket.send_string(message)
-                    #token = get_incoming_token()
-                    token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJIZWFkZXIiOnsiYWxnIjoiSFMyNTYiLCJ0eXAiOiJKV1QifSwiUGF5bG9hZCI6eyJpYXQiOiIxOTg5ODg5MDgwOCIsIlVzZXJuYW1lIjoiYmlnZXN0In19.qcWo5HSH8x45oqB9736oPujfhLLEQb4bbKOSMvIUXig"
-                    return Response(bson.json_util.dumps({"response":"The given user is now connected !","token": token}), status=200)
+                    with concurrent.futures.ThreadPoolExecutor() as executor:
+                        future = executor.submit(get_incoming_token)
+                        token = future.result()
+                        print(token)
+                        return Response(bson.json_util.dumps({"response":"The given user is now connected !","token": token}), status=200)
                 else:
                     return Response(bson.json_util.dumps({"response":"The given password is incorrect..."}), status=400)
             else:
@@ -252,16 +250,13 @@ if __name__ == "__main__":
             print("the database and its collection were created !")
             if collection_client.count_documents({"test": "test"}) >= 1:
                 collection_client.delete_many({"test": "test"})
-            jwt_send_host = "127.0.0.1"
+            jwt_send_host = "localhost"
             jwt_send_port = "5556"
-            jwt_receive_host = "127.0.0.1"
+            jwt_receive_host = "localhost"
             jwt_receive_port = "5555"
             context = zmq.Context()
             send_socket = context.socket(zmq.PUSH)
-            if send_socket is not None:
-                send_socket.connect('tcp://'+jwt_send_host+':'+jwt_send_port)
-                app.run(host='localhost', port=8000, debug=True)
-            else:
-                print("the connection to the token dealer could not be established...")
+            send_socket.connect('tcp://'+jwt_send_host+':'+jwt_send_port)
+            app.run(host='localhost', port=8000, debug=True)
         else:
             print("the database and its collection could not be created...")
