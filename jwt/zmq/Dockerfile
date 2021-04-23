@@ -1,6 +1,7 @@
 FROM python:3
 
 ADD ZMQ_JWT.py /
+ADD receiver.pem /
 
 RUN pip install PyJWT
 

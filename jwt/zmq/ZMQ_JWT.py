@@ -21,7 +21,10 @@ f.close()
 def encrypt_data(data):
     
     session_key = get_random_bytes(16)
-    recipient_key = RSA.import_key(open("receiver.pem").read())
+    try:
+        recipient_key = RSA.import_key(open("receiver.pem").read())
+    except:
+        print("public key not accesible")
     # Encrypt the session key with the public RSA key
     cipher_rsa = PKCS1_OAEP.new(recipient_key)
     enc_session_key = cipher_rsa.encrypt(session_key)
@@ -58,20 +61,21 @@ def decodeJWTTOKEN(Token):
 print("Starting ...")
 context = zmq.Context()
 address = os.environ["ZMQ_ADDRESS"]
-print(address)
+address2=os.environ["ZMQ_ADDRESS_2"]
+address3=os.environ["ZMQ_ADDRESS_3"]
+#print(address,address2)
 send_socket = context.socket(zmq.PUSH)
-send_socket.bind('tcp://0.0.0.0:5555')
+send_socket.bind(address2)
 
 recv_socket = context.socket(zmq.PULL)
 recv_socket.bind(address)
 
 send_socketAPR = context.socket(zmq.PUSH)
-send_socketAPR.bind('tcp://0.0.0.0:5557')
+send_socketAPR.bind(address3)
 print("Connexion done")
 while True:
-    print("ho")
     msg = recv_socket.recv_string()
-    print(msg)
+    #print(msg)
     if(msg[0]=="{"):
         try:
             print(f'Message from client: {msg}')
