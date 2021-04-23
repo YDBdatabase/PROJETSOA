@@ -16,8 +16,11 @@ def decrypt(data,key,tag,nonce,enc_session_key):
     return data.decode("utf-8")
 
 def decryptJWTToken(jwtchiffre):
-    f = open('mykey.pem','r')
-    key = RSA.import_key(f.read())
+    try:
+        f = open('mykey.pem','r')
+        key = RSA.import_key(f.read())
+    except:
+        print("Private key unavailable")
     encoded_chiffre_jwt=""
     for i in range(len(jwtchiffre)):
         #print(jwtchiffre[i][0],key,jwtchiffre[i][1],jwtchiffre[i][2],jwtchiffre[i][3])

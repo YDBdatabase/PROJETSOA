@@ -10,13 +10,18 @@ from Crypto.PublicKey import RSA
 from Crypto.Random import get_random_bytes
 from Crypto.Cipher import AES, PKCS1_OAEP
 
-"""
-key = RSA.generate(2048)
-f = open('mykey.pem','wb')
-f.write(key.export_key('PEM'))
-f.close()
-"""
 
+"""key = RSA.generate(2048)
+private_key = key.export_key()
+file_out = open("tokenkeypriv.pem", "wb")
+file_out.write(private_key)
+file_out.close()
+
+public_key = key.publickey().export_key()
+file_out = open("tokenkeypub.pem", "wb")
+file_out.write(public_key)
+file_out.close()
+"""
 
 def encrypt_data(data):
     
@@ -35,12 +40,22 @@ def encrypt_data(data):
     ciphertext, tag = cipher_aes.encrypt_and_digest(data.encode("utf-8"))
     return ciphertext,tag,cipher_aes.nonce,enc_session_key
 
+def decrypt(data,key,tag,nonce,enc_session_key):
+    # Decrypt the session key with the private RSA key
+    cipher_rsa = PKCS1_OAEP.new(key)
+    session_key = cipher_rsa.decrypt(enc_session_key)
+
+    # Decrypt the data with the AES session key
+    cipher_aes_dec = AES.new(session_key, AES.MODE_EAX, nonce)
+    data = cipher_aes_dec.decrypt_and_verify(data, tag)
+    return data.decode("utf-8")
+
 def sendJWTToken(secret):
     encoded_jwt = jwt.encode(secret, 'aogkrejgi2GA651g5&4dgth6781zlhafi12gri93p3uDNCe', algorithm='HS256')
     #print(encoded_jwt) 
     encoded_jwtsplited=encoded_jwt.split(".")
 
-    ciphertext,tag,nonce,enc_session_key=encrypt_data(encoded_jwtsplited[0])
+    #ciphertext,tag,nonce,enc_session_key=encrypt_data(encoded_jwtsplited[0])
     #print(ciphertext)
     #print(decrypt(ciphertext, key, tag, nonce, enc_session_key))
 
@@ -57,6 +72,22 @@ def decodeJWTTOKEN(Token):
     jwtrest=jwt.decode(Token, 'aogkrejgi2GA651g5&4dgth6781zlhafi12gri93p3uDNCe', algorithms=['HS256'])
     print("jwt= ",jwtrest)
     return jwtrest
+
+def decryptJWTToken(jwtchiffre):
+    
+    encoded_chiffre_jwt=""
+    for i in range(len(jwtchiffre)):
+        #print(jwtchiffre[i][0],key,jwtchiffre[i][1],jwtchiffre[i][2],jwtchiffre[i][3])
+        jwtdechiffre=decrypt(jwtchiffre[i][0],key,jwtchiffre[i][1],jwtchiffre[i][2],jwtchiffre[i][3])
+        if(i!=len(jwtchiffre)-1):
+            encoded_chiffre_jwt+=str(jwtdechiffre)+"."
+        else:
+            encoded_chiffre_jwt+=str(jwtdechiffre)
+
+    return encoded_chiffre_jwt
+
+f = open('tokenkeypriv.pem','r')
+key = RSA.import_key(f.read())
 
 print("Starting ...")
 context = zmq.Context()
@@ -90,10 +121,25 @@ while True:
             send_socket.send_string(str(messagesplit))
         except:
             print("Error while creating JWT TOKEN")
-    elif("|" in msg):
+    else:
         try:
-            msgsplit=msg.split("|")
-            decodeJWT=decodeJWTTOKEN(msgsplit[1])
+            msgsplited=msg.split("***")
+            newmsg=[]
+            msgtab=[]
+            msgsplit=[]
+            for i in range(len(msgsplited)-1):
+                msgsplit.append(msgsplited[i].split("^^^"))
+            for x in range(len(msgsplit)):
+                del msgsplit[x][-1]
+            for i in range(len(msgsplit)):
+                for j in range(len(msgsplit[i])):
+                    msgsplit[i][j]=msgsplit[i][j].encode('ISO-8859-1')
+            encoded_chiffre_jwt=decryptJWTToken(msgsplit)
+            #print("encoded : ",encoded_chiffre_jwt)
+
+            msgsplit=encoded_chiffre_jwt.split(".")
+            decodeJWT=decodeJWTTOKEN(msgsplit[1]+"."+msgsplit[2]+"."+msgsplit[3])
+            #print(decodeJWT,msgsplit[0])
             if(msgsplit[0]==decodeJWT["Payload"]["Username"]):
                 send_socketAPR.send_string("True")
             else:
