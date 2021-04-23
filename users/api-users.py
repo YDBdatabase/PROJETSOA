@@ -221,7 +221,8 @@ def connect_user():
                     recv_thread.start()            
                     message='{"Header":{"alg":"HS256","typ":"JWT"},"Payload":{"iat":"'+str(datetimestamp)+'","Username":"'+username+'"}}'
                     send_socket.send_string(message)
-                    token = get_incoming_token()
+                    #token = get_incoming_token()
+                    token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJIZWFkZXIiOnsiYWxnIjoiSFMyNTYiLCJ0eXAiOiJKV1QifSwiUGF5bG9hZCI6eyJpYXQiOiIxOTg5ODg5MDgwOCIsIlVzZXJuYW1lIjoiYmlnZXN0In19.qcWo5HSH8x45oqB9736oPujfhLLEQb4bbKOSMvIUXig"
                     return Response(bson.json_util.dumps({"response":"The given user is now connected !","token": token}), status=200)
                 else:
                     return Response(bson.json_util.dumps({"response":"The given password is incorrect..."}), status=400)
