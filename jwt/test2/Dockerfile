@@ -10,6 +10,7 @@ RUN pip install ZMQ
 
 EXPOSE 5556
 EXPOSE 5557
+
 CMD [ "python","-u","ZMQtestClientcopy.py" ]
 
 

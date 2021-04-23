@@ -57,16 +57,19 @@ def decodeJWTTOKEN(Token):
 
 print("Starting ...")
 context = zmq.Context()
+address = os.environ["ZMQ_ADDRESS"]
+print(address)
 send_socket = context.socket(zmq.PUSH)
 send_socket.bind('tcp://0.0.0.0:5555')
 
 recv_socket = context.socket(zmq.PULL)
-recv_socket.bind('tcp://0.0.0.0:5556')
+recv_socket.bind(address)
 
 send_socketAPR = context.socket(zmq.PUSH)
 send_socketAPR.bind('tcp://0.0.0.0:5557')
 print("Connexion done")
 while True:
+    print("ho")
     msg = recv_socket.recv_string()
     print(msg)
     if(msg[0]=="{"):

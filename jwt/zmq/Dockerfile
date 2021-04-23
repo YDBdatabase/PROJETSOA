@@ -8,8 +8,5 @@ RUN pip install pycryptodome
 
 RUN pip install ZMQ
 
-EXPOSE 5555
-EXPOSE 5556
-EXPOSE 5557
-
+CMD [ "python", "./ZMQ_JWT.py" ]
 

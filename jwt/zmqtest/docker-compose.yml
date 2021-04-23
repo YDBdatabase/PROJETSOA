@@ -12,7 +12,3 @@ services:
         aliases:
           - serverd
          
-
-networks:
-  mynet:
-    external: True

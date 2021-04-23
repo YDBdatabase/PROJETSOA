@@ -1,5 +1,6 @@
 import zmq
 import threading
+import os
 from Crypto.PublicKey import RSA
 from Crypto.Random import get_random_bytes
 from Crypto.Cipher import AES, PKCS1_OAEP
@@ -31,7 +32,9 @@ def decryptJWTToken(jwtchiffre):
 
 context = zmq.Context()
 send_socket = context.socket(zmq.PUSH)
-send_socket.connect('tcp://0.0.0.0:5556')
+address = os.environ["ZMQ_ADDRESS"]
+print(address)
+send_socket.connect(address)
 
 def print_incoming_messages():
     recv_socket = context.socket(zmq.PULL)

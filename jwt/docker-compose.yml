@@ -1,27 +1,14 @@
-version: "2"
-
+version: '3'
 services:
   zmq:
-    build: .
-    command: ["python", "-u", "./ZMQ_JWT.py"]
+    build: "./zmq"
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
     environment:
-      SERVER_LISTEN_URI: tcp://0.0.0.0:5556
-      SERVER_CONNECT_URI: tcp://0.0.0.0:5555
-    networks:
-      mynet:
-        aliases:
-          - serverd
+      - ZMQ_ADDRESS=tcp://0.0.0.0:5556
   zmqtest:
-    build: .
-    command: ["python", "-u","./ZMQtestClient.py"]
-    environment:
-      SERVER_LISTEN_URI: tcp://0.0.0.0:5555
-      SERVER_CONNECT_URI: tcp://0.0.0.0:5556
-    networks:
-      mynet:
-        aliases:
-          - serverd
-
-networks:
-  mynet:
-    external: True
+      build: "./zmqtest"
+      stdin_open: true # docker run -i
+      tty: true        # docker run -t
+      environment:
+        - ZMQ_ADDRESS=tcp://zmq:5556
