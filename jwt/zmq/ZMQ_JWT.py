@@ -140,7 +140,8 @@ while True:
             msgsplit=encoded_chiffre_jwt.split(".")
             decodeJWT=decodeJWTTOKEN(msgsplit[1]+"."+msgsplit[2]+"."+msgsplit[3])
             #print(decodeJWT,msgsplit[0])
-            if(msgsplit[0]==decodeJWT["Payload"]["Username"]):
+            print(decodeJWT)
+            if(msgsplit[0]==decodeJWT["Payload"]["Username"] and decodeJWT["Header"]["alg"]=="HS256" and decodeJWT["Header"]["typ"]=="JWT"):
                 send_socketAPR.send_string("True")
             else:
                 send_socketAPR.send_string("False")
