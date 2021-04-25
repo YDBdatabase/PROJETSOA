@@ -8,7 +8,7 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js" type="text/javascript"></script>
 </head>
 
-<body onload="showData();">
+<body>
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
     <div class="container-fluid">
         <a class="navbar-brand" href="index.html">SOA</a>
@@ -41,20 +41,28 @@
     
 </div>
 <script>
-    function showData() {
-        let request = new XMLHttpRequest();
-        let username = localStorage.getItem('username')
-        let token = localStorage.getItem('token');
-        request.open('GET', 'http://localhost:5000/apr/get_resource', true);
-        request.setRequestHeader('token',username+'|'+token);
-        request.onload = function(){
-            var img = document.createElement("img");
-            img.src = this.response.img;
-            var src = document.getElementById("header");
-            src.appendChild(img);
-        };
-        request.send();
-    }
+    $(document).ready(function(){
+        if(localStorage.getItem('token') != null){
+            let username = localStorage.getItem('username')
+            let token = localStorage.getItem('token');  
+            $.ajax({
+                type: "GET",
+                url: 'http://localhost:5000/apr/get_resource',
+                contentType: "image/png",
+                headers: {
+                    "token":username+"|"+token
+                },
+                success: function(result) {
+                    alert("image reçu");
+                    console.log(result);
+                },
+                error: function(xhr, status, error){
+                    alert("Error !");
+                    console.log(xhr.responseText);
+                }
+            });
+        }
+    });
 </script>
 </body>
 </html>

@@ -1,16 +1,10 @@
 import os
-import re
+from flask.helpers import send_from_directory
 import zmq
-import json
-import bson
-import time
-import bcrypt
-import pymongo
-import calendar
 import concurrent.futures
 from flask_cors import CORS, cross_origin
 from flasgger import Swagger
-from flask import Flask, Response, jsonify, request
+from flask import Flask, Response, jsonify, request, send_file
 from jsonschema import validate
 from bson import json_util
 from Crypto.PublicKey import RSA
@@ -82,8 +76,10 @@ def get_resource():
             future = executor.submit(get_incoming_response)
             response = future.result()
             print(response)
-            if response == "True": return Response("yes", status=200)
-            elif response == "False": return Response("no", status=200)
+            if response == "True": 
+                filename = 'secret.png'
+                return send_file(filename, mimetype='image/png')
+            elif response == "False": return Response("", status=200)
 
     else:
         return Response("no", status=400)
