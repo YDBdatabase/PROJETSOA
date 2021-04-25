@@ -37,7 +37,7 @@
     </div>
 </nav>
 
-<div id="header">
+<img id="image">
     
 </div>
 <script>
@@ -53,8 +53,8 @@
                     "token":username+"|"+token
                 },
                 success: function(result) {
-                    alert("image reçu");
                     console.log(result);
+                    document.getElementById('image').src = 'data:image/png;' + result;
                 },
                 error: function(xhr, status, error){
                     alert("Error !");
