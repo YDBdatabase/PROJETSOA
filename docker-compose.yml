@@ -12,6 +12,8 @@ services:
   mongodb:
     container_name: mongodb
     image: mongo:4
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
     volumes:
       - ./data:/mongodata/db
     ports:
@@ -19,14 +21,24 @@ services:
   users:
     container_name: users
     build: "./users"
+    depends_on:
+      - jwt
     stdin_open: true # docker run -i
     tty: true        # docker run -t
+    environment:
+      - jWT_ADDRESS_SEND=tcp://jwt:5556
+      - jWT_ADDRESS_RECEIVE=tcp://jwt:5555
     ports:
       - "8000:8000"
   apr:
     container_name: apr
     build: "./apr"
+    depends_on:
+      - jwt
     stdin_open: true # docker run -i
     tty: true        # docker run -t
+    environment:
+      - jWT_ADDRESS_SEND=tcp://jwt:5556
+      - jWT_ADDRESS_RECEIVE=tcp://jwt:5557
     ports:
       - "5000:5000"

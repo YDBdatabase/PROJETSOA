@@ -60,7 +60,7 @@ def decryptJWTToken(jwtchiffre):
 
 def get_incoming_token():
     recv_socket = context.socket(zmq.PULL)
-    recv_socket.connect('tcp://'+jwt_receive_host+':'+jwt_receive_port)
+    recv_socket.connect(os.environ["jWT_ADDRESS_RECEIVE"])
     msg = recv_socket.recv_string()
     msgsplited=msg.split("***")
     newmsg=[]
@@ -253,13 +253,9 @@ if __name__ == "__main__":
             print("the database and its collection were created !")
             if collection_client.count_documents({"test": "test"}) >= 1:
                 collection_client.delete_many({"test": "test"})
-            jwt_send_host = "zmq"
-            jwt_send_port = "5556"
-            jwt_receive_host = "zmq"
-            jwt_receive_port = "5555"
             context = zmq.Context()
             send_socket = context.socket(zmq.PUSH)
-            send_socket.connect('tcp://'+jwt_send_host+':'+jwt_send_port)
+            send_socket.connect(os.environ["jWT_ADDRESS_SEND"])
             app.run(host='0.0.0.0', port=8000, debug=True)
         else:
             print("the database and its collection could not be created...")

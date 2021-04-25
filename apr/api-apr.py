@@ -1,3 +1,4 @@
+import os
 import re
 import zmq
 import json
@@ -42,7 +43,7 @@ def decryptJWTToken(jwtchiffre):
 
 def get_incoming_response():
     recv_socket = context.socket(zmq.PULL)
-    recv_socket.connect('tcp://'+jwt_receive_host+':'+jwt_receive_port)
+    recv_socket.connect(os.environ["jWT_ADDRESS_RECEIVE"])
     msg = recv_socket.recv_string()
     return msg
 
@@ -76,5 +77,5 @@ if __name__ == "__main__":
     jwt_receive_port = "5557"
     context = zmq.Context()
     send_socket = context.socket(zmq.PUSH)
-    send_socket.connect('tcp://'+jwt_send_host+':'+jwt_send_port)
+    send_socket.connect(os.environ["jWT_ADDRESS_SEND"])
     app.run(host='0.0.0.0', port=5000, debug=True)
