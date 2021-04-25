@@ -17,29 +17,39 @@ from Crypto.PublicKey import RSA
 from Crypto.Random import get_random_bytes
 from Crypto.Cipher import AES, PKCS1_OAEP
 
-def decrypt(data,key,tag,nonce,enc_session_key):
-    # Decrypt the session key with the private RSA key
-    cipher_rsa = PKCS1_OAEP.new(key)
-    session_key = cipher_rsa.decrypt(enc_session_key)
+def encrypt_data(data):
+    
+    session_key = get_random_bytes(16)
+    recipient_key = RSA.import_key(open("tokenkeypub.pem").read())
 
-    # Decrypt the data with the AES session key
-    cipher_aes_dec = AES.new(session_key, AES.MODE_EAX, nonce)
-    data = cipher_aes_dec.decrypt_and_verify(data, tag)
-    return data.decode("utf-8")
+    # Encrypt the session key with the public RSA key
+    cipher_rsa = PKCS1_OAEP.new(recipient_key)
+    enc_session_key = cipher_rsa.encrypt(session_key)
 
-def decryptJWTToken(jwtchiffre):
-    f = open('mykey.pem','r')
-    key = RSA.import_key(f.read())
-    encoded_chiffre_jwt=""
-    for i in range(len(jwtchiffre)):
-        #print(jwtchiffre[i][0],key,jwtchiffre[i][1],jwtchiffre[i][2],jwtchiffre[i][3])
-        jwtdechiffre=decrypt(jwtchiffre[i][0],key,jwtchiffre[i][1],jwtchiffre[i][2],jwtchiffre[i][3])
-        if(i!=len(jwtchiffre)-1):
-            encoded_chiffre_jwt+=str(jwtdechiffre)+"."
-        else:
-            encoded_chiffre_jwt+=str(jwtdechiffre)
+    # Encrypt the data with the AES session key
+    cipher_aes = AES.new(session_key, AES.MODE_EAX)
+    #print(encoded_jwtsplited[0].encode("utf-8").decode("uf"))
+    ciphertext, tag = cipher_aes.encrypt_and_digest(data.encode("utf-8"))
+    return ciphertext,tag,cipher_aes.nonce,enc_session_key
 
-    return encoded_chiffre_jwt
+def sendJWTToken(token):
+    tokensplit=token.split("|")
+    #print(encoded_jwt) 
+    encoded_jwtsplited=tokensplit[1].split(".")
+
+    #ciphertext,tag,nonce,enc_session_key=encrypt_data(encoded_jwtsplited[0])
+    #print(ciphertext)
+    #print(decrypt(ciphertext, key, tag, nonce, enc_session_key))
+
+    jwtchiffre=[]
+    res,tag,nonce,enc_key=encrypt_data(tokensplit[0])
+    jwtchiffre.append([res.decode('ISO-8859-1') ,tag.decode('ISO-8859-1'),nonce.decode('ISO-8859-1'),enc_key.decode('ISO-8859-1')])
+    for i in range(len(encoded_jwtsplited)):
+        res,tag,nonce,enc_key=encrypt_data(encoded_jwtsplited[i])
+        #print(res,tag,nonce,enc_key)
+        jwtchiffre.append([res.decode('ISO-8859-1') ,tag.decode('ISO-8859-1'),nonce.decode('ISO-8859-1'),enc_key.decode('ISO-8859-1')])
+
+    return(jwtchiffre) #SEND MESSAGE  
 
 def get_incoming_response():
     recv_socket = context.socket(zmq.PULL)
@@ -59,7 +69,15 @@ def get_resource():
     """
     token = request.headers.get('token')
     if token is not None:
-        send_socket.send_string(token)
+        sendJWTToken(token)
+        msgToken=sendJWTToken(token)
+        messagesplit=""
+        for i in range(len(msgToken)):
+            msginter=""
+            for j in range(len(msgToken[i])):
+                msginter+=str(msgToken[i][j])+"^^^"
+            messagesplit+=str(msginter)+"***"
+        send_socket.send_string(messagesplit)
         with concurrent.futures.ThreadPoolExecutor() as executor:
             future = executor.submit(get_incoming_response)
             response = future.result()
