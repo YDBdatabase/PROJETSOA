@@ -45,7 +45,7 @@
         let request = new XMLHttpRequest();
         let username = localStorage.getItem('username')
         let token = localStorage.getItem('token');
-        request.open('GET', 'http://localhost:5000/apr/get_resource/', true);
+        request.open('GET', 'http://localhost:5000/apr/get_resource', true);
         request.setRequestHeader('token',username+'|'+token);
         request.onload = function(){
             var img = document.createElement("img");

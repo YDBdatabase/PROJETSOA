@@ -42,3 +42,10 @@ services:
       - jWT_ADDRESS_RECEIVE=tcp://jwt:5557
     ports:
       - "5000:5000"
+  web:
+    container_name: front
+    build: "./front"
+    ports:
+      - "8080:80"
+  
+  
