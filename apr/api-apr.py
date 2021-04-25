@@ -63,7 +63,9 @@ def get_resource():
             future = executor.submit(get_incoming_response)
             response = future.result()
             print(response)
-            return Response("yes", status=200)
+            if response == "True": return Response("yes", status=200)
+            elif response == "False": return Response("no", status=200)
+
     else:
         return Response("no", status=400)
 
@@ -75,4 +77,4 @@ if __name__ == "__main__":
     context = zmq.Context()
     send_socket = context.socket(zmq.PUSH)
     send_socket.connect('tcp://'+jwt_send_host+':'+jwt_send_port)
-    app.run(host='localhost', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)

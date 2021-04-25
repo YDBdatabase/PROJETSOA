@@ -1,7 +1,5 @@
-# syntax=docker/dockerfile:1
-FROM python:3.7-slim-buster
+FROM python:3
 WORKDIR /app
-COPY requirements.txt requirements.txt
+COPY api-users.py userSchema.json mykey.pem requirements.txt .
 RUN pip3 install -r requirements.txt
-COPY . .
 CMD [ "python", "api-users.py"]
