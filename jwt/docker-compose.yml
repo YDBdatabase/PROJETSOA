@@ -17,3 +17,12 @@ services:
       environment:
         - ZMQ_ADDRESS=tcp://zmq:5556
         - ZMQ_ADDRESS_2=tcp://zmq:5555
+  zmqtest2:
+      build: "./test2"
+      depends_on:
+      - zmq
+      stdin_open: true # docker run -i
+      tty: true        # docker run -t
+      environment:
+        - ZMQ_ADDRESS=tcp://zmq:5556
+        - ZMQ_ADDRESS_2=tcp://zmq:5557

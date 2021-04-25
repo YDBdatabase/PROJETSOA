@@ -1,6 +1,7 @@
 version: '3'
 services:
   jwt:
+    container_name: jwt
     build: "./jwt"
     stdin_open: true # docker run -i
     tty: true        # docker run -t
@@ -8,4 +9,36 @@ services:
       - ZMQ_ADDRESS=tcp://0.0.0.0:5556
       - ZMQ_ADDRESS_2=tcp://0.0.0.0:5555
       - ZMQ_ADDRESS_3=tcp://0.0.0.0:5557
-  
+  mongodb:
+    container_name: mongodb
+    image: mongo:4
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
+    volumes:
+      - ./data:/mongodata/db
+    ports:
+      - "27017:27017"
+  users:
+    container_name: users
+    build: "./users"
+    depends_on:
+      - jwt
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
+    environment:
+      - jWT_ADDRESS_SEND=tcp://jwt:5556
+      - jWT_ADDRESS_RECEIVE=tcp://jwt:5555
+    ports:
+      - "8000:8000"
+  apr:
+    container_name: apr
+    build: "./apr"
+    depends_on:
+      - jwt
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
+    environment:
+      - jWT_ADDRESS_SEND=tcp://jwt:5556
+      - jWT_ADDRESS_RECEIVE=tcp://jwt:5557
+    ports:
+      - "5000:5000"

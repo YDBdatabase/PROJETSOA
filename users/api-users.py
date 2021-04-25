@@ -1,3 +1,4 @@
+import os
 import zmq
 import json
 import bson
@@ -59,7 +60,7 @@ def decryptJWTToken(jwtchiffre):
 
 def get_incoming_token():
     recv_socket = context.socket(zmq.PULL)
-    recv_socket.connect('tcp://'+jwt_receive_host+':'+jwt_receive_port)
+    recv_socket.connect(os.environ["jWT_ADDRESS_RECEIVE"])
     msg = recv_socket.recv_string()
     msgsplited=msg.split("***")
     newmsg=[]
@@ -232,7 +233,9 @@ def connect_user():
         return Response(bson.json_util.dumps({"response":"No Json Received..."}), status=400)
 
 if __name__ == "__main__":
-    mongo_url = "mongodb://localhost:27017/"
+    mongo_host = "mongodb"
+    mongo_port = "27017"
+    mongo_url = "mongodb://"+mongo_host+":"+mongo_port+"/"
     mongo_client = mongo_connection(mongo_url)
     try:
         # The ismaster command is cheap and does not require auth.
@@ -250,13 +253,9 @@ if __name__ == "__main__":
             print("the database and its collection were created !")
             if collection_client.count_documents({"test": "test"}) >= 1:
                 collection_client.delete_many({"test": "test"})
-            jwt_send_host = "localhost"
-            jwt_send_port = "5556"
-            jwt_receive_host = "localhost"
-            jwt_receive_port = "5555"
             context = zmq.Context()
             send_socket = context.socket(zmq.PUSH)
-            send_socket.connect('tcp://'+jwt_send_host+':'+jwt_send_port)
-            app.run(host='localhost', port=8000, debug=True)
+            send_socket.connect(os.environ["jWT_ADDRESS_SEND"])
+            app.run(host='0.0.0.0', port=8000, debug=True)
         else:
             print("the database and its collection could not be created...")

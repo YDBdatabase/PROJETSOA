@@ -1,6 +1,7 @@
 FROM python:3
 
 ADD ZMQtestClientcopy.py /
+ADD tokenkeypub.pem /
 
 RUN pip install PyJWT
 
