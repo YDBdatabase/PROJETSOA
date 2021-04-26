@@ -37,7 +37,7 @@
     </div>
 </nav>
 
-<img id="image">
+<p id="text">
     
 </div>
 <script>
@@ -48,13 +48,13 @@
             $.ajax({
                 type: "GET",
                 url: 'http://localhost:5000/apr/get_resource',
-                contentType: "image/png",
+                contentType: "text/html",
                 headers: {
                     "token":username+"|"+token
                 },
                 success: function(result) {
                     console.log(result);
-                    document.getElementById('image').src = 'data:image/png;' + result;
+                    document.getElementById('text').textContent = result;
                 },
                 error: function(xhr, status, error){
                     alert("Error !");

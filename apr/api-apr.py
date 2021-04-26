@@ -77,8 +77,10 @@ def get_resource():
             response = future.result()
             print(response)
             if response == "True": 
-                filename = 'secret.png'
-                return send_file(filename, mimetype='image/png')
+                filename = 'secret.txt'
+                with open(filename, 'r') as file:
+                    data = file.read().replace('\n', '')
+                return data
             elif response == "False": return Response("", status=200)
 
     else:
