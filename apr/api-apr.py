@@ -58,8 +58,18 @@ CORS(app, support_credentials=True)
 @app.route('/apr/get_resource', methods=['GET'])
 @cross_origin(supports_credentials=True)
 def get_resource():
-    """ API function that returns an user with the given username
+    """ API function that returns a secret resource to an authenticated user
     ---
+    parameters:
+      - name: token
+        in: header
+        required: true
+        type: string
+    responses:
+      200:
+        description: A success message
+      400:
+        description: An error message
     """
     token = request.headers.get('token')
     if token is not None:
@@ -80,11 +90,10 @@ def get_resource():
                 filename = 'secret.txt'
                 with open(filename, 'r') as file:
                     data = file.read().replace('\n', '')
-                return data
-            elif response == "False": return Response("", status=200)
-
+                    return Response(data, status=200)
+            elif response == "False": return Response(status=400)
     else:
-        return Response("no", status=400)
+        return Response(status=400)
 
 if __name__ == "__main__":
     jwt_send_host = "localhost"

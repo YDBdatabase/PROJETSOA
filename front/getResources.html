@@ -48,10 +48,8 @@
             $.ajax({
                 type: "GET",
                 url: 'http://localhost:5000/apr/get_resource',
-                contentType: "text/html",
-                headers: {
-                    "token":username+"|"+token
-                },
+                dataType: "text",
+                headers: { "token":username+"|"+token },
                 success: function(result) {
                     console.log(result);
                     document.getElementById('text').textContent = result;

@@ -15,7 +15,7 @@ services:
     stdin_open: true # docker run -i
     tty: true        # docker run -t
     volumes:
-      - ./data:/mongodata/db
+      - ./mongodata:/data/db
     ports:
       - "27017:27017"
   users:
